@@ -23,7 +23,7 @@ $ docker pull gogs/gogs
 $ mkdir -p $HOME/gogs
 
 # Use `docker run` for the first time.
-$ docker run --name=gogs -p 10022:22 -p 10880:3000 -v $HOME/gogs:/data gogs/gogs
+$ docker run -d --name=gogs -p 10022:22 -p 10880:3000 -v $HOME/gogs:/data gogs/gogs
 
 # Use `docker start` if you have stopped it.
 $ docker start gogs
@@ -120,5 +120,29 @@ Within the repository folder execute a `git pull`. If the command returns Alread
 ![Congratulations!! You now have your own Git service running on your workstation!](docs/step12.png)
 
 ## - how to set PAM/token
+
+### Create github token
+
+https://github.blog/2013-05-16-personal-api-tokens/
+
+### Create gogs token
+
+To obtain an API token for Gogs, you need to follow these steps:
+
+1. Log in to your Gogs account.
+
+2. Click on your avatar in the upper right corner of the webpage and then click **Your Settings**.
+
+3. In the settings page, select **Applications** from the sidebar.
+   ![Applications](docs/step13.png)
+
+4. In the "Manage Personal Access Tokens" section, and click on **Generate New Token**.
+
+5. Provide a descriptive "Token Name" for the token (for example, "My API token") and click **Generate Token**.
+   ![Generate Token](docs/step14.png)
+
+6. Gogs will generate a new API token for you. Be sure to copy the token to a safe place, as you won't be able to see it again. If you lose the token, you'll need to generate a new one.
+
+You can now use this API token to authenticate your requests to the Gogs API. Remember to include the token in the "Authorization" header of your HTTP requests, like this:
 
 ## - how to run script
