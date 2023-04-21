@@ -147,29 +147,84 @@ You can now use this API token to authenticate your requests to the Gogs API. Re
 
 ## - how to run script
 
-### clone
+### build
 
-Clone all repos from GitHub organization to Gogs
+```go
+go build -o bin/gogs-helper
+```
+
+### help
+
+```go
+./bin/gogs-helper --help
+```
+
+A helper tool to clone and update repositories between GitHub and Gogs
 
 Usage:
-gogs-helper clone [flags]
+gogs-helper [command]
+
+Available Commands:
+clone Clone all repos from GitHub organization to Gogs
+completion Generate the autocompletion script for the specified shell
+help Help about any command
+update Update all existing repos in Gogs
 
 Flags:
--h, --help help for clone
--o, --org-name string grabs all repos from an organization (default "demo-33383080")
-
-Global Flags:
 -t, --github-token string GitHub access token (default "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")
 -s, --gogs-ssh-url string Gogs ssh URL (default "localhost:10022")
 -g, --gogs-token string Gogs base URL (default "77cae12a2134d6e6ad8da5262a90502a412d7c03")
 -u, --gogs-url string Gogs base URL (default "localhost:10880")
 -n, --gogs-user-name string your Gogs user name (default "my-name")
+-h, --help help for gogs-helper
 -w, --workers int Speed up the command (default 6)
 
-```go
-go build -o bin/gogs-helper
-./bin/gogs-helper clone -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Use "gogs-helper [command] --help" for more information about a command.
 
-// or
-go run main.go clone -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+### clone
+
+Clone all repos from GitHub organization to Gogs
+
+```go
+./bin/gogs-helper clone -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+```
+
+### update
+
+Update all existing repos in Gogs
+
+```go
+./bin/gogs-helper update -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+```
+
+### list-org
+
+Get a list of github organizations
+
+```go
+./bin/gogs-helper list-org -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+```
+
+### list
+
+Get a list of github repositories in an organization
+
+```go
+./bin/gogs-helper list -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+```
+
+### clone-local
+
+Clone all repos from GitHub organization into a local directory
+
+```go
+./bin/gogs-helper clone-local -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+```
+
+### add
+
+Add all repositories from a local directory to Gogs
+
+```go
+./bin/gogs-helper add -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
 ```
