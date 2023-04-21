@@ -146,3 +146,30 @@ To obtain an API token for Gogs, you need to follow these steps:
 You can now use this API token to authenticate your requests to the Gogs API. Remember to include the token in the "Authorization" header of your HTTP requests, like this:
 
 ## - how to run script
+
+### clone
+
+Clone all repos from GitHub organization to Gogs
+
+Usage:
+gogs-helper clone [flags]
+
+Flags:
+-h, --help help for clone
+-o, --org-name string grabs all repos from an organization (default "demo-33383080")
+
+Global Flags:
+-t, --github-token string GitHub access token (default "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")
+-s, --gogs-ssh-url string Gogs ssh URL (default "localhost:10022")
+-g, --gogs-token string Gogs base URL (default "77cae12a2134d6e6ad8da5262a90502a412d7c03")
+-u, --gogs-url string Gogs base URL (default "localhost:10880")
+-n, --gogs-user-name string your Gogs user name (default "my-name")
+-w, --workers int Speed up the command (default 6)
+
+```go
+go build -o bin/gogs-helper
+./bin/gogs-helper clone -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+
+// or
+go run main.go clone -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+```

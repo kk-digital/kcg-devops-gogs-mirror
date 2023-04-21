@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/google/go-github/v51 v51.0.0
+	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/oauth2 v0.6.0
 )
