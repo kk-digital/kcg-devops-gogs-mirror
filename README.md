@@ -173,3 +173,30 @@ go build -o bin/gogs-helper
 // or
 go run main.go clone -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
 ```
+
+### update
+
+Update all existing repos in Gogs
+
+Usage:
+gogs-helper update [flags]
+
+Flags:
+-h, --help help for update
+
+Global Flags:
+-t, --github-token string GitHub access token (default "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")
+-s, --gogs-ssh-url string Gogs ssh URL (default "localhost:10022")
+-g, --gogs-token string Gogs base URL (default "77cae12a2134d6e6ad8da5262a90502a412d7c03")
+-u, --gogs-url string Gogs base URL (default "localhost:10880")
+-n, --gogs-user-name string your Gogs user name (default "my-name")
+-d, --workdir string The working directory will store all the repository of github under its subdirectory repos (default ".")
+-w, --workers int Speed up the command (default 6)
+
+```go
+go build -o bin/gogs-helper
+./bin/gogs-helper update -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+
+// or
+go run main.go update -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+```

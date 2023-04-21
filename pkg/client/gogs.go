@@ -6,21 +6,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"os/exec"
 )
 
 type gogsClient struct {
 	gogsBaseURL     string
-	gogsSSHURL      string
 	gogsUserName    string
 	gogsAccessToken string
 }
 
-func NewGogsClient(gogsBaseURL, gogsSSHURL, gogsUserName, gogsAccessToken string) *gogsClient {
+func NewGogsClient(gogsBaseURL, gogsUserName, gogsAccessToken string) *gogsClient {
 	return &gogsClient{
 		gogsBaseURL:     "http://" + gogsBaseURL,
-		gogsSSHURL:      "ssh://git@" + gogsSSHURL,
 		gogsUserName:    gogsUserName,
 		gogsAccessToken: gogsAccessToken,
 	}
@@ -173,52 +169,4 @@ func (c *gogsClient) GetOrgRepo(orgName, repoName string) (map[string]interface{
 	}
 
 	return repo, nil
-}
-
-func (c *gogsClient) CloneRepoToGogs(orgName, repoName, cloneURL string) error {
-	// First, create the repository in Gogs using the Gogs API
-	err := c.CreateRepoInOrg(orgName, repoName)
-	if err != nil {
-		return fmt.Errorf("failed to create Gogs repository: %w", err)
-	}
-
-	// Use the git command to clone the GitHub repository and then push to the Gogs repository
-	cmd := exec.Command("git", "clone", "--mirror", cloneURL)
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("failed to clone GitHub repository: %w", err)
-	}
-
-	// Change to the cloned repository's directory
-	err = os.Chdir(repoName + ".git")
-	if err != nil {
-		return fmt.Errorf("failed to change to the cloned repository directory: %w", err)
-	}
-
-	// Construct the Gogs repository URL with the token for authentication
-	gogsRepoURL := fmt.Sprintf("%s/%s/%s.git", c.gogsSSHURL, orgName, repoName)
-
-	// Add the Gogs remote
-	cmd = exec.Command("git", "remote", "add", "gogs", gogsRepoURL)
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("failed to add Gogs remote: %w", err)
-	}
-
-	// Push the cloned repository to the Gogs remote
-	cmd = exec.Command("git", "push", "--mirror", "gogs")
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("failed to push to Gogs repository: %w", err)
-	}
-
-	// Change back to the original directory
-	if err = os.Chdir(".."); err != nil {
-		return fmt.Errorf("failed to change back to the original directory: %w", err)
-	}
-
-	// Remove the cloned repository
-	cmd = exec.Command("rm", "-rf", repoName+".git")
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("failed to remove the cloned repository: %w", err)
-	}
-
-	return nil
 }

@@ -3,8 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/google/go-github/v51/github"
@@ -44,11 +42,8 @@ func (c *githubClient) ListOrgRepos(ctx context.Context, orgName string) ([]*git
 		repos, resp, err := c.client.Repositories.ListByOrg(ctx, orgName, opt)
 		if err != nil {
 			if _, ok := err.(*github.RateLimitError); ok {
-				log.Println("hit rate limit")
+				fmt.Println("hit rate limit")
 			}
-			data, _ := ioutil.ReadAll(resp.Body)
-			fmt.Println("data:", string(data))
-			fmt.Println("resp:", resp)
 			return nil, fmt.Errorf("failed to list Github repositories: %w", err)
 		}
 		defer resp.Body.Close()
@@ -63,5 +58,3 @@ func (c *githubClient) ListOrgRepos(ctx context.Context, orgName string) ([]*git
 
 	return allRepos, nil
 }
-
-func (c *githubClient) Clone() {}
