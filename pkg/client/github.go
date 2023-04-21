@@ -32,6 +32,16 @@ func NewGithubClient(ctx context.Context, accessToken string) *githubClient {
 	}
 }
 
+func (c *githubClient) ListAllOrgs(ctx context.Context) ([]*github.Organization, error) {
+	orgs, resp, err := c.client.Organizations.ListAll(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Github organizations: %w", err)
+	}
+	defer resp.Body.Close()
+
+	return orgs, nil
+}
+
 func (c *githubClient) ListOrgRepos(ctx context.Context, orgName string) ([]*github.Repository, error) {
 	opt := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
