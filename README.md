@@ -13,7 +13,151 @@
 
 https://gogs.io/docs/installation/install_from_source.html
 
-###
+##### Installing Go
+
+Gogs requires Go 1.18 to compile, please refer to the [official documentation](https://go.dev/doc/install) for how to install Go in your system.
+
+```shell
+$ go version
+go version go1.19.8 linux/amd64
+```
+
+##### Set Up the Environment
+
+We are going to create a new uand set up everything under that user:
+
+```shell
+sudo adduser --disabled-login --gecos 'Gogs' git
+
+# CentOS:
+sudo useradd -r -m -d /home/git -s /sbin/nologin -c "Gogs" git
+```
+
+##### Compile Gogs
+
+###### Build with Tags
+
+A couple of things do not come with Gogs automatically, you need to compile Gogs with corresponding build tags.
+
+Available build tags are:
+
+- pam: PAM authentication support
+- cert: Generate self-signed certificates support
+- minwinsvc: Builtin windows service support (or you can use NSSM to create a service)
+
+```shell
+# Clone the repository to the "gogs" subdirectory
+git clone --depth 1 https://github.com/gogs/gogs.git gogs
+# Change working directory
+cd gogs
+# Compile the main program, dependencies will be downloaded at this step
+go build -tags "pam cert" -o gogs
+```
+
+If you get error: `fatal error: security/pam_appl.h: No such file or directory`, then install missing package via:
+
+```shell
+sudo apt-get install libpam0g-dev
+
+# CentOS
+sudo yum install -y pam-devel
+```
+
+##### Configure PAM policies
+
+Edit or create a new PAM configuration file, such as `/etc/pam.d/gogs`, where gogs is the PAM service name you used in the Gogs configuration file. Add the following to the PAM configuration file:
+
+```text
+auth        required      pam_unix.so nullok
+account     required      pam_unix.so
+```
+
+To configure this you just need to set the PAM Service Name to a filename in `/etc/pam.d/`. If you want it to work with normal Linux passwords, the user running Gogs must have read access to `/etc/shadow`.
+
+##### Custom configuration
+
+```shell
+$ mkdir -p custom/conf/auth.d
+
+$ vi custom/conf/auth.d/gogs_pam.conf
+# Copy these contents(conf/gogs_pam.conf) into gogs_pam.conf
+# This is an example of PAM authentication
+#
+id           = 104
+type         = pam
+name         = System Auth
+is_activated = true
+
+[config]
+service_name = gogs
+
+$ vi custom/conf/app.ini
+# Copy these contents(conf/app.ini) into app.ini, replacing root with your current system user
+BRAND_NAME = Gogs
+RUN_USER   = root
+RUN_MODE   = prod
+
+[database]
+TYPE     = sqlite3
+HOST     = 127.0.0.1:5432
+NAME     = gogs
+SCHEMA   = public
+USER     = gogs
+PASSWORD =
+SSL_MODE = disable
+PATH     = data/gogs/data/gogs.db
+
+[repository]
+ROOT           = data/git/gogs-repositories
+DEFAULT_BRANCH = master
+
+[server]
+DOMAIN           = localhost
+HTTP_PORT        = 10880
+EXTERNAL_URL     = http://localhost:10880/
+DISABLE_SSH      = false
+SSH_PORT         = 10022
+START_SSH_SERVER = false
+OFFLINE_MODE     = false
+
+[mailer]
+ENABLED = false
+
+[auth]
+REQUIRE_EMAIL_CONFIRMATION  = false
+DISABLE_REGISTRATION        = false
+ENABLE_REGISTRATION_CAPTCHA = true
+REQUIRE_SIGNIN_VIEW         = false
+
+[user]
+ENABLE_EMAIL_NOTIFICATION = false
+
+[picture]
+DISABLE_GRAVATAR        = false
+ENABLE_FEDERATED_AVATAR = false
+
+[session]
+PROVIDER = file
+
+[log]
+MODE      = file
+LEVEL     = Info
+ROOT_PATH = data/gogs/log
+
+[security]
+INSTALL_LOCK = true
+SECRET_KEY   = d4wTSI1d3NRGzt0
+```
+
+##### Test Installation
+
+To make sure Gogs is working:
+
+```shell
+./gogs web
+```
+
+If you do not see any error messages, hit Ctrl-C to stop Gogs.
 
 ## 2. Gogs may be run locally on any system with golang, or could be run in a docker container.
 
@@ -139,9 +283,18 @@ Within the repository folder execute a `git pull`. If the command returns Alread
 
 <!-- ![Congratulations!! You now have your own Git service running on your workstation!](docs/step12.png) -->
 
-## - how to set PAM/token
+## - how to create token
 
-### Create github token
+### Script - Create github token
+
+```shell
+$ go run main.go create-access-token -u root -p root -n script-token1
+2023/04/23 17:04:56 Getting access token with gogs...
+2023/04/23 17:04:56 user root created access token, Name: script-token1, Sha1: 0cbdfdd16430c7284aa39eb23ce3843b5dc8ef53
+2023/04/23 17:04:56 Successfully getted acccess token, total cost: 33.973863ms
+```
+
+### GUI - Create github token
 
 https://github.blog/2013-05-16-personal-api-tokens/
 
