@@ -9,17 +9,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listRepoCmd = &cobra.Command{
-	Use:   "list",
+var listOrgRepoCmd = &cobra.Command{
+	Use:   "list-org-repo",
 	Short: "Get a list of github repositories in an organization",
-	Run:   listRepo,
+	Run:   listOrgRepo,
 }
 
 func init() {
-	rootCmd.AddCommand(listRepoCmd)
+	rootCmd.AddCommand(listOrgRepoCmd)
 }
 
-func listRepo(cmd *cobra.Command, args []string) {
+func listOrgRepo(cmd *cobra.Command, args []string) {
 	now := time.Now()
 	log.Println("Listing GitHub repositories...")
 

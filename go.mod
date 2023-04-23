@@ -1,6 +1,6 @@
 module github.com/kk-digital/kcg-devops-gogs-mirror
 
-go 1.17
+go 1.19
 
 require (
 	github.com/google/go-github/v51 v51.0.0
