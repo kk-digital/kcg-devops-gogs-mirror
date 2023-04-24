@@ -1,8 +1,9 @@
 module github.com/kk-digital/kcg-devops-gogs-mirror
 
-go 1.17
+go 1.19
 
 require (
+	github.com/gogs/go-gogs-client v0.0.0-20210131175652-1d7215cd8d85
 	github.com/google/go-github/v51 v51.0.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/spf13/cobra v1.7.0

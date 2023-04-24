@@ -28,7 +28,7 @@ func clone(cmd *cobra.Command, args []string) {
 	log.Println("Cloning GitHub repositories to Gogs...")
 
 	// 1. create gogs org if not exists
-	gogsClient := client.NewGogsClient(gogsBaseURL, gogsUserName, gogsAccessToken)
+	gogsClient := client.NewGogsClient(gogsBaseURL, user, gogsAccessToken)
 	gogsOrg, err := gogsClient.GetOrg(orgName)
 	if err != nil {
 		log.Fatal(err)

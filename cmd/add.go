@@ -33,7 +33,7 @@ func add(cmd *cobra.Command, args []string) {
 		log.Fatalf("failed to get current directory: %v", err)
 	}
 
-	gogsClient := client.NewGogsClient(gogsBaseURL, gogsUserName, gogsAccessToken)
+	gogsClient := client.NewGogsClient(gogsBaseURL, user, gogsAccessToken)
 
 	err = filepath.Walk(workdir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
