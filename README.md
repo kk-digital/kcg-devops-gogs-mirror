@@ -51,50 +51,18 @@ git clone --depth 1 https://github.com/gogs/gogs.git gogs
 # Change working directory
 cd gogs
 # Compile the main program, dependencies will be downloaded at this step
-go build -tags "pam cert" -o gogs
+go build -tags "cert" -o gogs
 ```
-
-If you get error: `fatal error: security/pam_appl.h: No such file or directory`, then install missing package via:
-
-```shell
-sudo apt-get install libpam0g-dev
-
-# CentOS
-sudo yum install -y pam-devel
-```
-
-##### Configure PAM policies
-
-Edit or create a new PAM configuration file, such as `/etc/pam.d/gogs`, where gogs is the PAM service name you used in the Gogs configuration file. Add the following to the PAM configuration file:
-
-```text
-auth        required      pam_unix.so nullok
-account     required      pam_unix.so
-```
-
-To configure this you just need to set the PAM Service Name to a filename in `/etc/pam.d/`. If you want it to work with normal Linux passwords, the user running Gogs must have read access to `/etc/shadow`.
 
 ##### Custom configuration
 
 ```shell
-$ mkdir -p custom/conf/auth.d
-
-$ vi custom/conf/auth.d/gogs_pam.conf
-# Copy these contents(conf/gogs_pam.conf) into gogs_pam.conf
-# This is an example of PAM authentication
-#
-id           = 104
-type         = pam
-name         = System Auth
-is_activated = true
-
-[config]
-service_name = gogs
+$ mkdir -p custom/conf
 
 $ vi custom/conf/app.ini
-# Copy these contents(conf/app.ini) into app.ini, replacing root with your current system user
+# Copy these contents(conf/app.ini) into app.ini, replacing git with your current system user
 BRAND_NAME = Gogs
-RUN_USER   = root
+RUN_USER   = git
 RUN_MODE   = prod
 
 [database]
@@ -175,7 +143,7 @@ $ docker pull gogs/gogs
 $ mkdir -p $HOME/gogs
 
 # Use `docker run` for the first time.
-$ docker run -d --name=gogs -p 10022:22 -p 10880:3000 -v $HOME/gogs:/data gogs/gogs
+$ docker run -d --name=gogs -p 10022:22 -p 10880:3000 -v $HOME/gogs:/data -v $HOME/gogs/gogs/conf:/data/gogs/conf gogs/gogs
 
 # Use `docker start` if you have stopped it.
 $ docker start gogs
@@ -285,20 +253,20 @@ Within the repository folder execute a `git pull`. If the command returns Alread
 
 ## - how to create token
 
-### Script - Create github token
-
-```shell
-$ go run main.go create-access-token -u root -p root -n script-token1
-2023/04/23 17:04:56 Getting access token with gogs...
-2023/04/23 17:04:56 user root created access token, Name: script-token1, Sha1: 0cbdfdd16430c7284aa39eb23ce3843b5dc8ef53
-2023/04/23 17:04:56 Successfully getted acccess token, total cost: 33.973863ms
-```
-
 ### GUI - Create github token
 
 https://github.blog/2013-05-16-personal-api-tokens/
 
-### Create gogs token
+### Script - Create gogs token
+
+```shell
+$ go run main.go create-access-token -b http://localhost:10880 -u administrator -p password -n script_token_202304
+2023/04/25 09:09:31 creating access token with gogs...
+2023/04/25 09:09:31 user administrator created access token, Name: script_token_202304, Sha1: 4d2da9c0bb5c15170c6ebfc1e076cd40eb6bd4fa
+2023/04/25 09:09:31 Successfully created acccess token, total cost: 16.201227ms
+```
+
+### GUI - Create gogs token
 
 To obtain an API token for Gogs, you need to follow these steps:
 
@@ -320,105 +288,192 @@ You can now use this API token to authenticate your requests to the Gogs API. Re
 
 ## - how to run script
 
-### build
-
-```go
-go build -o bin/gogs-helper
-
-// or go run directly
-go run main.go
-```
-
-### help
-
-```go
-./bin/gogs-helper --help
-```
-
-A helper tool to clone and update repositories between GitHub and Gogs
-
-Usage:
-gogs-helper [command]
-
-Available Commands:
-clone Clone all repos from GitHub organization to Gogs
-completion Generate the autocompletion script for the specified shell
-help Help about any command
-update Update all existing repos in Gogs
-
-Flags:
--t, --github-token string GitHub access token (default "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")
--s, --gogs-ssh-url string Gogs ssh URL (default "localhost:10022")
--g, --gogs-token string Gogs base URL (default "77cae12a2134d6e6ad8da5262a90502a412d7c03")
--u, --gogs-url string Gogs base URL (default "localhost:10880")
--n, --gogs-user-name string your Gogs user name (default "my-name")
--h, --help help for gogs-helper
--w, --workers int Speed up the command (default 6)
-
-Use "gogs-helper [command] --help" for more information about a command.
-
-### clone
-
-Clone all repos from GitHub organization to Gogs
-
-```go
-go run main.go clone -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
-
-// or
-./bin/gogs-helper clone -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
-```
-
-### update
-
-Update all existing repos in Gogs
-
-```go
-go run main.go update -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
-
-// or
-./bin/gogs-helper update -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
-```
-
 ### list-org
 
+```shell
+# Usage
+$ go run main.go list-org -h
 Get a list of github organizations
 
-```go
-go run main.go list-org -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Usage:
+  gogs-helper list-org [flags]
 
-// or
-./bin/gogs-helper list-org -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Flags:
+  -t, --github-token string   GitHub access token
+  -h, --help                  help for list-org
+
+# Example
+$ go run main.go list-org -t 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
 ```
 
 ### list-org-repo
 
+```shell
+# Usage
+$ go run main.go list-org-repo -h
 Get a list of github repositories in an organization
 
-```go
-go run main.go list-org-repo -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Usage:
+  gogs-helper list-org-repo [flags]
 
-// or
-./bin/gogs-helper list-org-repo -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Flags:
+  -t, --github-token string   GitHub access token
+  -h, --help                  help for list-org-repo
+  -o, --org-name string       grabs all repos from an organization
+
+# Example
+$ go run main.go list-org-repo -t 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 -o demo-33383080
 ```
 
-### clone-local
+### clone
 
-Clone all repos from GitHub organization into a local directory
+```shell
+# Usage
+$ go run main.go clone -h
+Clone all repos from GitHub organization into a local directory. Duplicate clone will fail: exit status 128
 
-```go
-go run main.go clone-local -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Usage:
+  gogs-helper clone [flags]
 
-// or
-./bin/gogs-helper clone-local -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Flags:
+  -t, --github-token string   GitHub access token
+  -h, --help                  help for clone
+  -o, --org-name string       grabs all repos from an organization
+  -d, --workdir string        The working directory will store all the repository of github
+
+# Example
+$ go run main.go clone -t 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 -o demo-33383080 -d repos
+2023/04/24 16:03:41 Cloning GitHub repositories to local directory...
+2023/04/24 16:03:44 Cloning repository demo-33383080/go-demo, cost: 2.764543569s
+2023/04/24 16:03:47 Cloning repository demo-33383080/python-demo, cost: 2.820298126s
+2023/04/24 16:03:50 Cloning repository demo-33383080/rust-demo, cost: 3.145889356s
+2023/04/24 16:03:50 Successfully cloned repositories, total cost: 9.616009742s
+```
+
+### create-access-token
+
+```shell
+# Usage
+$ go run main.go create-access-token -h
+Create an access token with a user and password
+
+Usage:
+  gogs-helper create-access-token [flags]
+
+Flags:
+  -b, --gogs-base-url string   Gogs base URL, e.g. http://localhost:10880
+  -h, --help                   help for create-access-token
+  -p, --pass string            System user password, e.g. password
+  -n, --token-name string      Access token name, e.g. script_token
+  -u, --user string            System user, e.g. admin
+
+# Example
+$ go run main.go create-access-token -b http://localhost:10880 -u administrator -p password -n script_token_202304
+2023/04/25 09:09:31 creating access token with gogs...
+2023/04/25 09:09:31 user administrator created access token, Name: script_token_202304, Sha1: 4d2da9c0bb5c15170c6ebfc1e076cd40eb6bd4fa
+2023/04/25 09:09:31 Successfully created acccess token, total cost: 16.201227ms
+```
+
+### create-public-key
+
+```shell
+# Usage
+$ go run main.go create-public-key -h
+Create a public key to use git ssh
+
+Usage:
+  gogs-helper create-public-key [flags]
+
+Flags:
+  -b, --gogs-base-url string   Gogs base URL, e.g. http://localhost:10880
+  -t, --gogs-token string      Gogs access token, e.g. 5bfee6a4f169870796561210eb94679381d4503d
+  -h, --help                   help for create-public-key
+  -k, --key string             SSH public key, e.g. cat ~/.ssh/id_rsa.pub
+  -s, --title string           SSH title, e.g. ssh-rsa
+
+# Example
+$ go run main.go create-public-key -b http://localhost:10880 -t 5bfee6a4f169870796561210eb94679381d4503d -s ssh-rsa -k "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDWeNnzfxYtdm0sBG2+AxrXYM0tVFhhwr2Wxosuc2GaA8kMV6TwgR+yTbP86QLy/RkbgYheCoVdKs41EtsGHSvT5SW9FbmXDKHq6tIluPnaEAmLlJh3PeBtAef5obqgp0mkTjTeAr4DYfwGrPdpmqMwoMqezRAoa5vTI7AOFoxHgJX2LyvGi3M5KwGBTi/Mym1zPHtXjRkqYyYktVukJnteJ2Sh/oaXMgQIPrgFSrg8WjkVaOOXtNacaWZZ42ePCBnleCVVNf09hfuceIBadOrmvPjpuomAfSyUzgnZZ/Dv5ulZoKUe5UOx9e5n6Gylii+o510PfFZueLa3APHB2AD3dPHfb30d71wO0uz+lxN7zhUOJEn9IVV2agc75UAsJOmd7vc0U4pnzjt9Hase4vmFoV63i6f9EuqZaJBzPeHjnTLu+gvsvoNyaIywJlFZxF5kIMeIA8SNf8QMQbZif4gql/Ssb564IGPNJoaBgwLBsDyCwlPgpDmJ/u5KBJ5Hq6K4KB78IdwuXNxwxmxWqG8t5JIkMfeG36o8NvjtwJM6pQuONxT+PMVkvBov9w7eOV2PCcbT/28k64OmZMmWRCNYnaBZ7RvYApjiFpdVyFKC3ROWgXjhVpacrSMdPmVzLKRubnKct7OnJ+kfP9mg/fx9czQV+cu7TDAAq/vgmC/HJQ== wff19940326@gmail.com"
+2023/04/24 16:48:33 creating public key with gogs...
+2023/04/24 16:48:33 created public key, Title: ssh-rsa, URL: http://localhost:10880/api/v1/user/keys/1
+2023/04/24 16:48:33 Successfully created public key, total cost: 31.746193ms
 ```
 
 ### add
 
+```shell
+# Usage
+$ go run main.go add -h
 Add all repositories from a local directory to Gogs
 
-```go
-go run main.go add -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Usage:
+  gogs-helper add [flags]
 
-// or
-./bin/gogs-helper add -t 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 -g 77cae12a2134d6e6ad8da5262a90502a412d7c03
+Flags:
+  -b, --gogs-base-url string   Gogs base URL, e.g. http://localhost:10880
+  -s, --gogs-ssh-url string    Gogs ssh URL, e.g. ssh://git@localhost:10022
+  -t, --gogs-token string      Gogs access token, e.g. 221a1527091612fade38d265742b84c40ab17de1
+  -h, --help                   help for add
+  -o, --org-name string        Add all repos to an organization
+  -d, --workdir string         The working directory will store all the repository of github
+
+# Example
+$ go run main.go add -b http://localhost:10880 -t 4d2da9c0bb5c15170c6ebfc1e076cd40eb6bd4fa -o demo-33383080 -d repos -s ssh://git@localhost:10022
+2023/04/25 09:14:11 Adding repositories to gogs...
+2023/04/25 09:14:12 Adding repository repos/go-demo.git to gogs, cost: 362.264121ms
+2023/04/25 09:14:12 Adding repository repos/python-demo.git to gogs, cost: 328.826171ms
+2023/04/25 09:14:12 Adding repository repos/rust-demo.git to gogs, cost: 315.496392ms
+2023/04/25 09:14:12 Successfully added repositories, total cost: 1.014036102s
+```
+
+### update
+
+```shell
+# Usage
+$ go run main.go update -h
+Update all existing repos in Gogs
+
+Usage:
+  gogs-helper update [flags]
+
+Flags:
+  -h, --help             help for update
+  -d, --workdir string   The working directory will store all the repository of github
+
+# Example
+$ go run main.go update -d repos
+2023/04/25 09:23:53 Updating Gogs repositories from Github...
+The authenticity of host 'github.com (140.82.114.4)' can't be established.
+ECDSA key fingerprint is SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM.
+ECDSA key fingerprint is MD5:7b:99:81:1e:4c:91:a5:0d:5a:2e:2e:80:13:3f:24:ca.
+Are you sure you want to continue connecting (yes/no)? yes
+2023/04/25 09:23:58 Updating repository repos/go-demo.git, cost: 5.093054417s
+2023/04/25 09:24:01 Updating repository repos/python-demo.git, cost: 3.021705811s
+2023/04/25 09:24:04 Updating repository repos/rust-demo.git, cost: 2.88737189s
+2023/04/25 09:24:04 Successfully updated, total cost: 11.002365063s
+```
+
+### help
+
+```shell
+$ go run main.go --help
+A helper tool to clone and update repositories between GitHub and Gogs
+
+Usage:
+  gogs-helper [command]
+
+Available Commands:
+  add                 Add all repositories from a local directory to Gogs
+  clone-local         Clone all repos from GitHub organization into a local directory
+  completion          Generate the autocompletion script for the specified shell
+  create-access-token Create an access token with a user and password
+  create-public-key   Create a public key to use git ssh
+  help                Help about any command
+  list-org            Get a list of github organizations
+  list-org-repo       Get a list of github repositories in an organization
+  update              Update all existing repos in Gogs
+
+Flags:
+  -h, --help   help for gogs-helper
+
+Use "gogs-helper [command] --help" for more information about a command.
 ```

@@ -19,6 +19,8 @@ var updateCmd = &cobra.Command{
 }
 
 func init() {
+	updateCmd.PersistentFlags().StringVarP(&workdir, "workdir", "d", "", "The working directory will store all the repository of github")
+
 	rootCmd.AddCommand(updateCmd)
 }
 

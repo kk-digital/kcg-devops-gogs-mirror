@@ -16,6 +16,12 @@ var listOrgRepoCmd = &cobra.Command{
 }
 
 func init() {
+	listOrgRepoCmd.PersistentFlags().StringVarP(&githubAccessToken, "github-token", "t", "", "GitHub access token")
+	listOrgRepoCmd.PersistentFlags().StringVarP(&orgName, "org-name", "o", "", "grabs all repos from an organization")
+
+	listOrgRepoCmd.MarkPersistentFlagRequired("github-token")
+	listOrgRepoCmd.MarkPersistentFlagRequired("org-name")
+
 	rootCmd.AddCommand(listOrgRepoCmd)
 }
 
