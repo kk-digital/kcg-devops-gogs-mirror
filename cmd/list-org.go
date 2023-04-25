@@ -16,6 +16,10 @@ var listOrgCmd = &cobra.Command{
 }
 
 func init() {
+	listOrgCmd.PersistentFlags().StringVarP(&githubAccessToken, "github-token", "t", "", "GitHub access token")
+
+	listOrgCmd.MarkPersistentFlagRequired("github-token")
+
 	rootCmd.AddCommand(listOrgCmd)
 }
 

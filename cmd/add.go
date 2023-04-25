@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kk-digital/kcg-devops-gogs-mirror/pkg/client"
+	"github.com/gogs/go-gogs-client"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +20,16 @@ var addCmd = &cobra.Command{
 }
 
 func init() {
+	addCmd.PersistentFlags().StringVarP(&gogsBaseURL, "gogs-base-url", "b", "", "Gogs base URL, e.g. http://localhost:10880")
+	addCmd.PersistentFlags().StringVarP(&gogsSSHURL, "gogs-ssh-url", "s", "", "Gogs ssh URL, e.g. ssh://git@localhost:10022")
+	addCmd.PersistentFlags().StringVarP(&gogsAccessToken, "gogs-token", "t", "", "Gogs access token, e.g. 221a1527091612fade38d265742b84c40ab17de1")
+	addCmd.PersistentFlags().StringVarP(&orgName, "org-name", "o", "", "Add all repos to an organization")
+	addCmd.PersistentFlags().StringVarP(&workdir, "workdir", "d", "", "The working directory will store all the repository of github")
+
+	addCmd.MarkPersistentFlagRequired("gogs-base-url")
+	addCmd.MarkPersistentFlagRequired("gogs-ssh-url")
+	addCmd.MarkPersistentFlagRequired("gogs-token")
+	addCmd.MarkPersistentFlagRequired("workdir")
 	rootCmd.AddCommand(addCmd)
 }
 
@@ -33,7 +43,21 @@ func add(cmd *cobra.Command, args []string) {
 		log.Fatalf("failed to get current directory: %v", err)
 	}
 
-	gogsClient := client.NewGogsClient(gogsBaseURL, user, gogsAccessToken)
+	client := gogs.NewClient(gogsBaseURL, gogsAccessToken)
+	// 1. create gogs org if not exists
+	if _, err = client.GetOrg(orgName); err != nil && err.Error() == "404 Not Found" {
+		if _, err = client.CreateOrg(gogs.CreateOrgOption{
+			UserName:    orgName,
+			FullName:    orgName,
+			Description: "Cloned organization from GitHub",
+		}); err != nil {
+			log.Fatal(fmt.Errorf("failed to create organization %s: %w", orgName, err))
+		}
+		log.Printf("Successfully added organization %s\n", orgName)
+	}
+	if err != nil {
+		log.Fatal(fmt.Errorf("failed to get organization %s: %w", orgName, err))
+	}
 
 	err = filepath.Walk(workdir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -44,7 +68,11 @@ func add(cmd *cobra.Command, args []string) {
 
 			repoName := strings.TrimSuffix(filepath.Base(path), ".git")
 			// First, create the repository in Gogs using the Gogs API
-			if err = gogsClient.CreateRepoInOrg(orgName, repoName); err != nil {
+			if _, err = client.CreateOrgRepo(orgName, gogs.CreateRepoOption{
+				Name:        repoName,
+				Description: "Cloned from GitHub",
+				Private:     true,
+			}); err != nil {
 				return fmt.Errorf("failed to create repository to gogs: %w", err)
 			}
 
@@ -55,13 +83,13 @@ func add(cmd *cobra.Command, args []string) {
 			}
 
 			// Construct the Gogs repository URL with the token for authentication
-			gogsSSHURL_ := "ssh://git@" + gogsSSHURL
-			gogsRepoURL := fmt.Sprintf("%s/%s/%s.git", gogsSSHURL_, orgName, repoName)
+			gogsRepoURL := fmt.Sprintf("%s/%s/%s.git", gogsSSHURL, orgName, repoName)
 
 			// Add the Gogs remote
 			cmd := exec.Command("git", "remote", "add", "gogs", gogsRepoURL)
 			if err = cmd.Run(); err != nil {
-				return fmt.Errorf("failed to add Gogs remote: %w", err)
+				fmt.Println("err:", err)
+				return fmt.Errorf("failed to add Gogs remote %s: %w", gogsRepoURL, err)
 			}
 
 			// Push the updated repository to the Gogs remote

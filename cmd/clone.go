@@ -14,32 +14,28 @@ import (
 )
 
 var cloneCmd = &cobra.Command{
-	Use:   "clone",
-	Short: "Clone all repos from GitHub organization to Gogs",
+	Use:   "clone-local",
+	Short: "Clone all repos from GitHub organization into a local directory",
+	Long:  "Clone all repos from GitHub organization into a local directory. Duplicate clone will fail: exit status 128",
 	Run:   clone,
 }
 
 func init() {
+	cloneCmd.PersistentFlags().StringVarP(&githubAccessToken, "github-token", "t", "", "GitHub access token")
+	cloneCmd.PersistentFlags().StringVarP(&orgName, "org-name", "o", "", "grabs all repos from an organization")
+	cloneCmd.PersistentFlags().StringVarP(&workdir, "workdir", "d", "", "The working directory will store all the repository of github")
+
+	cloneCmd.MarkPersistentFlagRequired("github-token")
+	cloneCmd.MarkPersistentFlagRequired("org-name")
+	cloneCmd.MarkPersistentFlagRequired("workdir")
+
 	rootCmd.AddCommand(cloneCmd)
 }
 
 func clone(cmd *cobra.Command, args []string) {
-	cloneNow := time.Now()
-	log.Println("Cloning GitHub repositories to Gogs...")
+	now := time.Now()
+	log.Println("Cloning GitHub repositories to local directory...")
 
-	// 1. create gogs org if not exists
-	gogsClient := client.NewGogsClient(gogsBaseURL, user, gogsAccessToken)
-	gogsOrg, err := gogsClient.GetOrg(orgName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if len(gogsOrg) == 0 {
-		if err = gogsClient.CreateOrg(orgName); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	// 2. input org, find all the github repo
 	ctx := context.Background()
 	githubClient := client.NewGithubClient(ctx, githubAccessToken)
 	allRepos, err := githubClient.ListOrgRepos(ctx, orgName)
@@ -47,75 +43,29 @@ func clone(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	// 3. clone repo to gogs org
 	for _, repo := range allRepos {
-		now := time.Now()
-
-		repoName, cloneURL := *repo.Name, *repo.SSHURL
-		// 3.1. create gogs org repo if not exists
-		gogsRepo, err := gogsClient.GetOrgRepo(orgName, repoName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if len(gogsRepo) != 0 {
-			log.Printf("Repository %s already exists, skipped, cost: %s\n", *repo.FullName, time.Since(now))
-			continue
-		}
-
-		// First, create the repository in Gogs using the Gogs API
-		if err = gogsClient.CreateRepoInOrg(orgName, repoName); err != nil {
+		cloneNow := time.Now()
+		if err = clone_(*repo.Name, *repo.SSHURL); err != nil {
 			log.Fatal(err)
 		}
 
-		// 3.2. clone repo to gogs org repo
-		if err = clone_(repoName, cloneURL); err != nil {
-			log.Fatal(err)
-		}
-
-		log.Printf("Cloning repository %s, cost: %s\n", *repo.FullName, time.Since(now))
+		log.Printf("Cloning repository %s, cost: %s\n", *repo.FullName, time.Since(cloneNow))
 	}
 
-	log.Printf("Successfully cloned, total cost: %s\n", time.Since(cloneNow))
+	log.Printf("Successfully cloned repositories, total cost: %s\n", time.Since(now))
 }
 
 func clone_(repoName, cloneURL string) error {
-	// Get current directory
-	dir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
-	}
-
 	// Mkdir repos
 	repoDir := filepath.Join(workdir, repoName+".git")
-	if err := cloneLocal_(repoName, cloneURL); err != nil {
-		return fmt.Errorf("failed to clone repositories into local directory: %w", err)
+	if err := os.MkdirAll(repoDir, os.ModePerm); err != nil {
+		return fmt.Errorf("failed to mkdir gogs repositories directory: %w", err)
 	}
 
-	// Change to the cloned repository's directory
-	err = os.Chdir(repoDir)
-	if err != nil {
-		return fmt.Errorf("failed to change to the cloned repository directory: %w", err)
-	}
-
-	// Construct the Gogs repository URL with the token for authentication
-	gogsSSHURL_ := "ssh://git@" + gogsSSHURL
-	gogsRepoURL := fmt.Sprintf("%s/%s/%s.git", gogsSSHURL_, orgName, repoName)
-
-	// Add the Gogs remote
-	cmd := exec.Command("git", "remote", "add", "gogs", gogsRepoURL)
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("failed to add Gogs remote: %w", err)
-	}
-
-	// Push the cloned repository to the Gogs remote
-	cmd = exec.Command("git", "push", "--mirror", "gogs")
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("failed to push to Gogs repository %s: %w", repoName, err)
-	}
-
-	// Change back to the original directory
-	if err = os.Chdir(dir); err != nil {
-		return fmt.Errorf("failed to change back to the original directory: %w", err)
+	// Use the git command to clone the GitHub repository and then push to the Gogs repository
+	cmd := exec.Command("git", "clone", "--mirror", cloneURL, repoDir)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to clone GitHub repository: %w", err)
 	}
 
 	return nil
