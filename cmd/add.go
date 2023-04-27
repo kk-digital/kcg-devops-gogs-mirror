@@ -88,7 +88,6 @@ func add(cmd *cobra.Command, args []string) {
 			// Add the Gogs remote
 			cmd := exec.Command("git", "remote", "add", "gogs", gogsRepoURL)
 			if err = cmd.Run(); err != nil {
-				fmt.Println("err:", err)
 				return fmt.Errorf("failed to add Gogs remote %s: %w", gogsRepoURL, err)
 			}
 

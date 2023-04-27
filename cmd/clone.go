@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -14,7 +15,7 @@ import (
 )
 
 var cloneCmd = &cobra.Command{
-	Use:   "clone-local",
+	Use:   "clone",
 	Short: "Clone all repos from GitHub organization into a local directory",
 	Long:  "Clone all repos from GitHub organization into a local directory. Duplicate clone will fail: exit status 128",
 	Run:   clone,
@@ -64,8 +65,10 @@ func clone_(repoName, cloneURL string) error {
 
 	// Use the git command to clone the GitHub repository and then push to the Gogs repository
 	cmd := exec.Command("git", "clone", "--mirror", cloneURL, repoDir)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to clone GitHub repository: %w", err)
+		return fmt.Errorf("failed to clone GitHub repository, error: %w, %s", err, stderr.String())
 	}
 
 	return nil
