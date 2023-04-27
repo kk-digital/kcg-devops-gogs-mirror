@@ -463,7 +463,7 @@ Usage:
 
 Available Commands:
   add                 Add all repositories from a local directory to Gogs
-  clone-local         Clone all repos from GitHub organization into a local directory
+  clone               Clone all repos from GitHub organization into a local directory
   completion          Generate the autocompletion script for the specified shell
   create-access-token Create an access token with a user and password
   create-public-key   Create a public key to use git ssh
