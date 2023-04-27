@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kk-digital/kcg-devops-gogs-mirror/pkg/client"
+	"github.com/kk-digital/kcg-devops-gogs-mirror/pkg/pretty"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +36,7 @@ func listOrg(cmd *cobra.Command, args []string) {
 	}
 
 	for _, org := range allOrgs {
-		log.Println(org)
+		log.Println(pretty.JSON(org))
 	}
 
 	log.Printf("Successfully listed organizations, total cost: %s\n", time.Since(now))
