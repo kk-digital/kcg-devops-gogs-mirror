@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gogs/go-gogs-client"
+	gogs "github.com/gogs/go-gogs-client"
 	"github.com/spf13/cobra"
 )
 
@@ -73,6 +73,9 @@ func add(cmd *cobra.Command, args []string) {
 				Description: "Cloned from GitHub",
 				Private:     true,
 			}); err != nil {
+				if strings.Contains(err.Error(), "repository already exists") {
+					return filepath.SkipDir
+				}
 				return fmt.Errorf("failed to create repository to gogs: %w", err)
 			}
 
