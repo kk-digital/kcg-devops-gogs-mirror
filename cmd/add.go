@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+
 var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add all repositories from a local directory to Gogs",
@@ -73,6 +74,9 @@ func add(cmd *cobra.Command, args []string) {
 				Description: "Cloned from GitHub",
 				Private:     true,
 			}); err != nil {
+				if strings.Contains(err.Error(), "repository already exists") {
+					return filepath.SkipDir
+				}
 				return fmt.Errorf("failed to create repository to gogs: %w", err)
 			}
 

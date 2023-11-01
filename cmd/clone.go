@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+        "strings"
 
 	"github.com/kk-digital/kcg-devops-gogs-mirror/pkg/client"
 	"github.com/spf13/cobra"
@@ -68,6 +69,10 @@ func clone_(repoName, cloneURL string) error {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		if strings.Contains(stderr.String(), "already exists") {
+			fmt.Print("Repo already exists, skipping...")
+			return nil
+		}
 		return fmt.Errorf("failed to clone GitHub repository, error: %w, %s", err, stderr.String())
 	}
 
