@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gogs/go-gogs-client"
+	gogs "github.com/gogs/go-gogs-client"
 	"github.com/spf13/cobra"
 )
 

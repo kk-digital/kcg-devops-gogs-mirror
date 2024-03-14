@@ -44,7 +44,8 @@ func update(cmd *cobra.Command, args []string) {
 			// Update from github
 			cmd := exec.Command("git", "-C", path, "remote", "update")
 			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("failed to update %s: %w", path, err)
+				log.Printf("failed to update %s: %w", path, err)
+				return filepath.SkipDir
 			}
 
 			// Change to the cloned repository's directory
@@ -56,7 +57,14 @@ func update(cmd *cobra.Command, args []string) {
 			// Push the updated repository to the Gogs remote
 			cmd = exec.Command("git", "push", "--mirror", "gogs")
 			if err = cmd.Run(); err != nil {
-				return fmt.Errorf("failed to push to Gogs repository %s: %w", path, err)
+				log.Printf("failed to push to Gogs repository %s: %w", path, err)
+
+				// Change back to the original directory
+				if err = os.Chdir(dir); err != nil {
+					return fmt.Errorf("failed to change back to the original directory: %w", err)
+				}
+
+				return filepath.SkipDir
 			}
 
 			// Change back to the original directory
