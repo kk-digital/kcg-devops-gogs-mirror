@@ -303,7 +303,7 @@ Flags:
   -h, --help                  help for list-org
 
 # Example
-$ go run main.go list-org -t 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
+$ go run main.go list-org -t YOUR_GITHUB_TOKEN
 ```
 
 ### list-org-repo
@@ -322,7 +322,7 @@ Flags:
   -o, --org-name string       grabs all repos from an organization
 
 # Example
-$ go run main.go list-org-repo -t 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 -o demo-33383080
+$ go run main.go list-org-repo -t YOUR_GITHUB_TOKEN -o demo-33383080
 ```
 
 ### clone
@@ -342,7 +342,7 @@ Flags:
   -d, --workdir string        The working directory will store all the repository of github
 
 # Example
-$ go run main.go clone -t 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 -o demo-33383080 -d repos
+$ go run main.go clone -t YOUR_GITHUB_TOKEN -o demo-33383080 -d repos
 2023/04/24 16:03:41 Cloning GitHub repositories to local directory...
 2023/04/24 16:03:44 Cloning repository demo-33383080/go-demo, cost: 2.764543569s
 2023/04/24 16:03:47 Cloning repository demo-33383080/python-demo, cost: 2.820298126s
